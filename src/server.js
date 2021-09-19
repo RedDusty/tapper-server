@@ -9,9 +9,11 @@ const http = require('http').Server(app);
 /** @type {socketio} */
 const io = require('socket.io')(http, { pingInterval: 5000 });
 
-const db = require('./db').db;
+const { dbLobby, dbUsers } = require('./db');
 
 const user_login = require('./events/user_login');
+const lobby_create = require('./events/lobby_create');
+const disconnect = require('./events/disconnect');
 
 io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   console.log(socket.id + ' is connected');
@@ -19,55 +21,11 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
 
   user_login(socket, io);
 
-  socket.on('LOBBY_CREATE', (data) => {
-    socket.leave('users');
-    socket.join('playing');
-    const newDBlobby = [
-      ...db.get('lobby'),
-      {
-        id: data.id,
-        nickname: data.users[0].nickname,
-        shape: data.shape,
-        players: data.players,
-        rounds: data.rounds,
-        field: data.field,
-        users: data.users
-      }
-    ];
-    db.set('lobby', newDBlobby);
-    socket.in('users').emit('LOBBY_UPDATE', db.get('games'));
+  lobby_create(socket, io);
 
-    const newDBplaying = [
-      ...db.get('playing'),
-      {
-        nickname,
-        avatar,
-        skin,
-        rank,
-        firstLogin,
-        uid,
-        id
-      }
-    ];
-    db.set('playing', newDBplaying);
+  disconnect(socket, io);
 
-    socket.in('users').emit('USERS_UPDATE', { usersCount: db.get('users').length });
-    socket.in('users').emit('PLAYING_UPDATE', { playingCount: db.get('playing').length });
-
-    console.log(`Game ${data.id} has been created.`);
-  });
-
-  socket.on('disconnect', (reason) => {
-    socket.leave('users');
-    const index = db.get('users').findIndex((el) => el.id === socket.id);
-    const newArr = db.get('users').slice();
-    newArr.splice(index, 1);
-    db.set('users', newArr);
-    console.log(socket.id + ' has disconnected, reason: ' + reason);
-    socket.in('users').emit('USERS_UPDATE', { usersCount: db.get('users').length });
-  });
-
-  socket.on('ping', (func) => {
+  socket.on('SERVER_PING', (func) => {
     if (typeof func === 'function') {
       func();
     }

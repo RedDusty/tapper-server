@@ -1,7 +1,5 @@
-const db = new Map();
+const dbUsers = new Map();
+const dbLobby = new Map();
 
-db.set('lobby', []);
-db.set('users', []);
-db.set('playing', []);
-
-exports.db = db
+exports.dbUsers = dbUsers;
+exports.dbLobby = dbLobby;
