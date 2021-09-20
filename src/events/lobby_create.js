@@ -18,9 +18,24 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
   socket.on('LOBBY_CREATE', (data) => {
     socket.join('lobby');
 
+    const hasGame = [...dbLobby].filter(([k, v]) => v.ownerID === socket.id);
+
+    if (hasGame[0]) {
+      try {
+        dbLobby.delete(hasGame[0][1].code);
+        console.log(
+          `Game ${hasGame[0][1].code} already exists of user ${hasGame[0][1].users[0].nickname} | ${hasGame[0][1].users[0].uid} | ${socket.id}. Deleting...`
+        );
+      } catch (err) {
+        console.log(`Game ${hasGame[0][1].code} cannot be deleted. Error.`);
+      }
+    }
+
     if (dbLobby.has(data.code)) dbLobby.delete(data.code);
 
     let code = codeGenerator();
+
+    socket.join(code);
 
     do {
       if (dbLobby.has(code)) {
@@ -28,11 +43,26 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
       }
     } while (dbLobby.has(code));
 
+    Object.assign(data, { code: code });
+
     dbLobby.set(code, data);
 
-    io.in('users').except('lobby').emit('USERS_UPDATE', { usersCount: dbUsers.size });
-    io.in('users').except('lobby').emit('LOBBY_UPDATE', { lobbyCount: dbLobby.size });
-    io.to(socket.id).emit('LOBBY_CODE', { code });
+    const lobbyListMap = new Map([...dbLobby].filter(([k, v]) => v.isPrivate === false));
+
+    const lobbyListArray = [...lobbyListMap].map((lobby) => {
+      return {
+        nickname: lobby.nickname,
+        shape: lobby.shape,
+        players: lobby.players,
+        rounds: lobby.rounds,
+        field: lobby.field
+      };
+    });
+
+    io.in('users').except('lobby').emit('USERS_UPDATE', dbUsers.size);
+    io.in('users').except('lobby').emit('LOBBY_UPDATE', dbLobby.size);
+    io.in('users').except('lobby').emit('LOBBY_GET', lobbyListArray);
+    socket.emit('LOBBY_GET_CODE', code);
 
     console.log(`Game ${code} has been created. Owner: ${data.ownerID} | ${data.nickname} | ${data.uid}`);
   });

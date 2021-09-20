@@ -6,7 +6,6 @@ module.exports = function (/** @type {Socket} */ socket, io) {
     socket.leave('users');
     socket.leave('lobby');
 
-    if (dbUsers.has(socket.id)) dbUsers.delete(socket.id);
 
     dbLobby.forEach((lobby) => {
       if (lobby.ownerID === socket.id) {
@@ -21,9 +20,11 @@ module.exports = function (/** @type {Socket} */ socket, io) {
         });
       }
     });
+    
+    if (dbUsers.has(socket.id)) dbUsers.delete(socket.id);
 
     console.log(socket.id + ' has disconnected, reason: ' + reason);
-    io.in('users').emit('USERS_UPDATE', { usersCount: dbUsers.size });
-    io.in('users').emit('LOBBY_UPDATE', { lobby: dbLobby.size });
+    io.in('users').emit('USERS_UPDATE', dbUsers.size);
+    io.in('users').emit('LOBBY_UPDATE', dbLobby.size);
   });
 };

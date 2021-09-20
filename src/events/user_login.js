@@ -18,7 +18,7 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
     }
 
     socket.join('users');
-    io.in('users').emit('USERS_UPDATE', { usersCount: dbUsers.size });
-    io.in('users').emit('LOBBY_UPDATE', { playingCount: dbLobby.size });
+    io.in('users').emit('USERS_UPDATE', dbUsers.size);
+    io.in('users').emit('LOBBY_UPDATE', dbLobby.size);
   });
 };
