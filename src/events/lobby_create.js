@@ -1,5 +1,5 @@
 const { Socket } = require('socket.io');
-const { dbLobby, dbUsers } = require('../db');
+const { dbLobby, dbOnline } = require('../db');
 
 function codeGenerator() {
   const arr = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
@@ -16,7 +16,7 @@ function codeGenerator() {
 
 module.exports = function (/** @type {Socket} socket*/ socket, io) {
   socket.on('LOBBY_CREATE', (data) => {
-    socket.join('lobby');
+    socket.leave('users')
 
     const hasGame = [...dbLobby].filter(([k, v]) => v.ownerID === socket.id);
 
@@ -35,13 +35,14 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
 
     let code = codeGenerator();
 
-    socket.join(code);
 
     do {
       if (dbLobby.has(code)) {
         code = codeGenerator();
       }
     } while (dbLobby.has(code));
+    
+    socket.join(`LOBBY_${code}`);
 
     Object.assign(data, { code: code });
 
@@ -59,9 +60,9 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
       };
     });
 
-    io.in('users').except('lobby').emit('USERS_UPDATE', dbUsers.size);
-    io.in('users').except('lobby').emit('LOBBY_UPDATE', dbLobby.size);
-    io.in('users').except('lobby').emit('LOBBY_GET', lobbyListArray);
+    io.in('users').emit('ONLINE_UPDATE', dbOnline.size);
+    io.in('users').emit('LOBBY_UPDATE', lobbyListMap.size);
+    io.in('users').emit('LOBBY_GET', lobbyListArray);
     socket.emit('LOBBY_GET_CODE', code);
 
     console.log(`Game ${code} has been created. Owner: ${data.ownerID} | ${data.nickname} | ${data.uid}`);

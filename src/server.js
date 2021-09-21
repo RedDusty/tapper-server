@@ -14,6 +14,7 @@ const { dbLobby, dbUsers } = require('./db');
 const user_login = require('./events/user_login');
 const lobby_create = require('./events/lobby_create');
 const disconnect = require('./events/disconnect');
+const lobby_messenger = require('./events/lobby_messenger');
 
 io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   console.log(socket.id + ' is connected');
@@ -24,6 +25,8 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   lobby_create(socket, io);
 
   disconnect(socket, io);
+
+  lobby_messenger(socket, io);
 
   socket.on('SERVER_PING', (func) => {
     if (typeof func === 'function') {

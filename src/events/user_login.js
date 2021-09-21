@@ -1,11 +1,11 @@
 const { Socket } = require('socket.io');
-const { dbLobby, dbUsers } = require('../db');
+const { dbLobby, dbOnline } = require('../db');
 
 module.exports = function (/** @type {Socket} socket*/ socket, io) {
   socket.on('USER_LOGIN', ({ nickname, avatar, skin, rank, firstLogin, uid, id }) => {
     if (id) {
-      if (!dbUsers.has(id)) {
-        dbUsers.set(id, {
+      if (!dbOnline.has(id)) {
+        dbOnline.set(id, {
           nickname,
           avatar,
           skin,
@@ -18,7 +18,9 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
     }
 
     socket.join('users');
-    io.in('users').emit('USERS_UPDATE', dbUsers.size);
+    socket.join('online');
+
+    io.in('users').emit('ONLINE_UPDATE', dbOnline.size);
     io.in('users').emit('LOBBY_UPDATE', dbLobby.size);
   });
 };

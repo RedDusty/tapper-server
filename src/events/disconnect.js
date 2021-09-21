@@ -1,30 +1,32 @@
 const { Socket } = require('socket.io');
-const { dbLobby, dbUsers } = require('../db');
+const { dbLobby, dbOnline } = require('../db');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('disconnect', (reason) => {
     socket.leave('users');
-    socket.leave('lobby');
-
+    socket.leave('online');
 
     dbLobby.forEach((lobby) => {
       if (lobby.ownerID === socket.id) {
+        socket.leave(`LOBBY_${lobby.code}`);
         dbLobby.delete(lobby.code);
-        dbUsers.forEach((user) => {
+        dbOnline.forEach((user) => {
           if (user.id === socket.id) {
             console.log(
-              `Game ${lobby.code} has been destroyed. Owner: ${lobby.ownerID} | ${user.nickname} | ${user.uid}. Reason: ${reason}`
+              `Lobby ${lobby.code} has been destroyed. Owner: ${lobby.ownerID} | ${user.nickname} | ${user.uid}. Reason: ${reason}`
             );
             return 0;
           }
         });
       }
     });
-    
-    if (dbUsers.has(socket.id)) dbUsers.delete(socket.id);
+
+    if (dbOnline.has(socket.id)) dbOnline.delete(socket.id);
+
+    const lobbyListMap = new Map([...dbLobby].filter(([k, v]) => v.isPrivate === false));
 
     console.log(socket.id + ' has disconnected, reason: ' + reason);
-    io.in('users').emit('USERS_UPDATE', dbUsers.size);
-    io.in('users').emit('LOBBY_UPDATE', dbLobby.size);
+    io.in('users').emit('ONLINE_UPDATE', dbOnline.size);
+    io.in('users').emit('LOBBY_UPDATE', lobbyListMap.size);
   });
 };
