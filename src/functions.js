@@ -1,9 +1,11 @@
 const { dbLobby } = require('./db');
 
 function getFreeLobbies() {
-  const lobbyListMap = new Map([...dbLobby].filter(([k, v]) => v.isPrivate === false));
+  const lobbyListPublic = new Map([...dbLobby].filter(([k, v]) => v.isPrivate === false));
 
-  const lobbyListArray = [...lobbyListMap].map((lobby) => {
+  const lobbyListNotFull = new Map([...lobbyListPublic].filter(([k, v]) => v.inLobbyPlayers < v.maxPlayers));
+
+  const lobbyListArray = [...lobbyListNotFull].map((lobby) => {
     const data = lobby[1];
     return {
       avatar: lobby[1].users[0].avatar,
