@@ -58,8 +58,6 @@ module.exports = function (/** @type {Socket} */ socket, io) {
 function emitter(io, code, option, type) {
   const lobbyListArray = getFreeLobbies();
 
-  console.log(lobbyListArray.length);
-
   io.in('users').emit('LOBBY_UPDATE', getFreeLobbies().length);
   io.in('users').emit('LOBBY_GET', lobbyListArray);
   io.in(`LOBBY_${code}`).emit('LOBBY_OPTIONS_UPDATE', option, type);

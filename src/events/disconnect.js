@@ -1,5 +1,6 @@
 const { Socket } = require('socket.io');
 const { dbLobby, dbOnline } = require('../db');
+const { getFreeLobbies } = require('../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('disconnect', (reason) => {
@@ -23,10 +24,10 @@ module.exports = function (/** @type {Socket} */ socket, io) {
 
     if (dbOnline.has(socket.id)) dbOnline.delete(socket.id);
 
-    const lobbyListMap = new Map([...dbLobby].filter(([k, v]) => v.isPrivate === false));
+    const lobbyListArray = getFreeLobbies();
 
     console.log(socket.id + ' has disconnected, reason: ' + reason);
     io.in('users').emit('ONLINE_UPDATE', dbOnline.size);
-    io.in('users').emit('LOBBY_UPDATE', lobbyListMap.size);
+    io.in('users').emit('LOBBY_GET', lobbyListArray);
   });
 };
