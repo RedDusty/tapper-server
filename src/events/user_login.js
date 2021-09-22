@@ -1,5 +1,6 @@
 const { Socket } = require('socket.io');
 const { dbLobby, dbOnline } = require('../db');
+const { getFreeLobbies } = require('../functions');
 
 module.exports = function (/** @type {Socket} socket*/ socket, io) {
   socket.on('USER_LOGIN', ({ nickname, avatar, skin, rank, firstLogin, uid, id }) => {
@@ -21,6 +22,6 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
     socket.join('online');
 
     io.in('users').emit('ONLINE_UPDATE', dbOnline.size);
-    io.in('users').emit('LOBBY_UPDATE', dbLobby.size);
+    socket.emit('LOBBY_GET', getFreeLobbies());
   });
 };

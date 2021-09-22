@@ -15,6 +15,8 @@ const user_login = require('./events/user_login');
 const lobby_create = require('./events/lobby_create');
 const disconnect = require('./events/disconnect');
 const lobby_messenger = require('./events/lobby_messenger');
+const lobby_options = require('./events/lobby_options');
+const { getFreeLobbies } = require('./functions');
 
 io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   console.log(socket.id + ' is connected');
@@ -27,6 +29,13 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   disconnect(socket, io);
 
   lobby_messenger(socket, io);
+
+  lobby_options(socket, io);
+
+  socket.on('LOBBY_GET_FIRST', (id) => {
+    const lobbyListArray = getFreeLobbies();
+    io.to(id).emit('LOBBY_GET', lobbyListArray);
+  });
 
   socket.on('SERVER_PING', (func) => {
     if (typeof func === 'function') {
