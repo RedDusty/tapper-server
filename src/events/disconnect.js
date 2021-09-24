@@ -20,6 +20,30 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           }
         });
       }
+      lobby.users.forEach((user, index) => {
+        if (user.id === socket.id) {
+          lobby.users.splice(index, 1);
+          lobby.inLobbyPlayers = String(lobby.users.length);
+          lobby.messages.push({
+            avatar: 'system',
+            id: 'system',
+            nickname: 'System',
+            uid: 'system',
+            message: `${user.nickname} disconnected`,
+            time: Date.now(),
+            code: lobby.code
+          });
+          const lobbyListArray = getFreeLobbies();
+          io.in('users').emit('LOBBY_GET', lobbyListArray);
+          io.in(`LOBBY_${lobby.code}`).emit('LOBBY_GET_MESSAGES', lobby.messages);
+          io.in(`LOBBY_${lobby.code}`).emit('LOBBY_USERS_UPDATE', {
+            type: 'userLeave',
+            value: lobby.users,
+            lobby: lobby
+          });
+          return 0;
+        }
+      });
     });
 
     if (dbOnline.has(socket.id)) dbOnline.delete(socket.id);

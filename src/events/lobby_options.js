@@ -59,5 +59,9 @@ function emitter(io, code, option, type) {
   const lobbyListArray = getFreeLobbies();
 
   io.in('users').emit('LOBBY_GET', lobbyListArray);
-  io.in(`LOBBY_${code}`).emit('LOBBY_OPTIONS_UPDATE', option, type);
+  io.in(`LOBBY_${code}`).emit('LOBBY_OPTIONS_UPDATE', {
+    option,
+    type,
+    code
+  });
 }
