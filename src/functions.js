@@ -8,6 +8,7 @@ function getFreeLobbies() {
   const lobbyListArray = [...lobbyListNotFull].map((lobby) => {
     const data = lobby[1];
     return {
+      ownerID: data.ownerID,
       avatar: lobby[1].users[0].avatar,
       nickname: data.nickname,
       shape: data.shape,
