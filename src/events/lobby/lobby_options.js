@@ -1,6 +1,6 @@
 const { Socket } = require('socket.io');
-const { dbLobby } = require('../db');
-const { getFreeLobbies } = require('../functions');
+const { dbLobby } = require('../../db');
+const { getFreeLobbies } = require('../../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('LOBBY_OPTIONS', (data) => {

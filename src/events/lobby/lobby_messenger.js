@@ -1,5 +1,5 @@
 const { Socket } = require('socket.io');
-const { dbLobby } = require('../db');
+const { dbLobby } = require('../../db');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('LOBBY_MESSENGER', (data) => {

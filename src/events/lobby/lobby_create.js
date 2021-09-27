@@ -1,6 +1,6 @@
 const { Socket } = require('socket.io');
-const { dbLobby, dbOnline } = require('../db');
-const { getFreeLobbies } = require('../functions');
+const { dbLobby, dbOnline } = require('../../db');
+const { getFreeLobbies } = require('../../functions');
 
 function codeGenerator() {
   const arr = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';

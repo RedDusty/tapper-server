@@ -12,11 +12,16 @@ const io = require('socket.io')(http, { pingInterval: 5000 });
 const { dbLobby, dbUsers } = require('./db');
 
 const user_login = require('./events/user_login');
-const lobby_create = require('./events/lobby_create');
 const disconnect = require('./events/disconnect');
-const lobby_messenger = require('./events/lobby_messenger');
-const lobby_options = require('./events/lobby_options');
-const lobby_users = require('./events/lobby_users');
+
+const lobby_create = require('./events/lobby/lobby_create');
+const lobby_messenger = require('./events/lobby/lobby_messenger');
+const lobby_options = require('./events/lobby/lobby_options');
+const lobby_users = require('./events/lobby/lobby_users');
+
+// const user_loaded = require('./events/game/user_loaded');
+// const game_loading = require('./events/game/game_loading');
+
 const { getFreeLobbies } = require('./functions');
 
 io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
@@ -24,16 +29,15 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   socket.send(socket.id);
 
   user_login(socket, io);
-
-  lobby_create(socket, io);
-
   disconnect(socket, io);
 
+  lobby_create(socket, io);
   lobby_messenger(socket, io);
-
   lobby_options(socket, io);
+  lobby_users(socket, io);
 
-  lobby_users(socket, io)
+  // user_loaded(socket, io);
+  // game_loading(socket, io)
 
   socket.on('LOBBY_GET_FIRST', (id) => {
     const lobbyListArray = getFreeLobbies();
