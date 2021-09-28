@@ -54,6 +54,6 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
     io.in('users').emit('LOBBY_GET', lobbyListArray);
     socket.emit('LOBBY_GET_CODE', code);
 
-    console.log(`Lobby ${code} has been created. Owner: ${data.ownerUID} | ${data.nickname} | ${data.uid}`);
+    console.log(`Lobby ${code} has been created. Owner: ${data.ownerUID} | ${data.nickname} | ${data.users[0].id}`);
   });
 };
