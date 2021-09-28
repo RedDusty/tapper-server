@@ -19,7 +19,7 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
   socket.on('LOBBY_CREATE', (data) => {
     socket.leave('users');
 
-    const hasGame = [...dbLobby].filter(([k, v]) => v.ownerID === socket.id);
+    const hasGame = [...dbLobby].filter(([k, v]) => v.ownerUID === data.users[0].uid);
 
     if (hasGame[0]) {
       try {
@@ -54,6 +54,6 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
     io.in('users').emit('LOBBY_GET', lobbyListArray);
     socket.emit('LOBBY_GET_CODE', code);
 
-    console.log(`Lobby ${code} has been created. Owner: ${data.ownerID} | ${data.nickname} | ${data.uid}`);
+    console.log(`Lobby ${code} has been created. Owner: ${data.ownerUID} | ${data.nickname} | ${data.uid}`);
   });
 };

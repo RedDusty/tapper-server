@@ -8,17 +8,19 @@ module.exports = function (/** @type {Socket} */ socket, io) {
     socket.leave('online');
 
     dbLobby.forEach((lobby) => {
-      if (lobby.ownerID === socket.id) {
-        socket.leave(`LOBBY_${lobby.code}`);
-        dbLobby.delete(lobby.code);
-        dbOnline.forEach((user) => {
-          if (user.id === socket.id) {
+      dbOnline.forEach((user) => {
+        if (user.id === socket.id) {
+          socket.leave(`LOBBY_${lobby.code}`);
+          if (user.uid === lobby.ownerUID) {
+            dbLobby.delete(lobby.code);
             console.log(
-              `Lobby ${lobby.code} has been destroyed. Owner: ${lobby.ownerID} | ${user.nickname} | ${user.uid}. Reason: ${reason}`
+              `Lobby ${lobby.code} has been destroyed. Owner: ${lobby.ownerUID} | ${user.nickname} | ${user.uid}. Reason: ${reason}`
             );
-            return 0;
           }
-        });
+          return 0;
+        }
+      });
+      if (lobby.ownerUID === socket.id) {
       }
       lobby.users.forEach((user, index) => {
         if (user.id === socket.id) {

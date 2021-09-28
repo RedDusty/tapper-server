@@ -3,17 +3,19 @@ const { dbLobby, dbOnline } = require('../db');
 const { getFreeLobbies } = require('../functions');
 
 module.exports = function (/** @type {Socket} socket*/ socket, io) {
-  socket.on('USER_LOGIN', ({ nickname, avatar, skin, rank, firstLogin, uid, id }) => {
+  socket.on('USER_LOGIN', ({ nickname, avatar, skin, score, firstLogin, uid, id, banned, skinURL }) => {
     if (id) {
       if (!dbOnline.has(id)) {
         dbOnline.set(id, {
           nickname,
           avatar,
           skin,
-          rank,
+          score,
           firstLogin,
           uid,
-          id
+          id,
+          banned,
+          skinURL
         });
       }
     }
