@@ -8,13 +8,14 @@ module.exports = function (/** @type {Socket} */ socket, io) {
     socket.leave('online');
 
     try {
-      hostChangeOrDestroy(io, socket.id, reason);
-    } catch (err) {
-      console.log(err);
-    }
-
-    try {
-      userLeave(io, socket.id);
+      const isHost = hostChangeOrDestroy(io, socket.id, reason);
+      if (isHost !== true) {
+        try {
+          userLeave(io, socket.id);
+        } catch (err) {
+          console.log(err);
+        }
+      }
     } catch (err) {
       console.log(err);
     }
