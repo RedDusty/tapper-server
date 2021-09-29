@@ -1,5 +1,6 @@
 const { Socket } = require('socket.io');
 const { dbLobby } = require('../../db');
+const { getFreeLobbies } = require('../../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('GAME_START', (data) => {
@@ -21,6 +22,11 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           index: dot + 1
         });
       }
+      dbLobby.get(data.code).visibility = 'game';
+
+      const lobbyListArray = getFreeLobbies();
+
+      io.in('users').emit('LOBBY_GET', lobbyListArray);
       const field = { dots: dots, fieldX: Number(lobby.fieldX || 1), fieldY: Number(lobby.fieldY || 1) };
       io.in(`LOBBY_${data.code}`).emit('GAME_LOADING', { lobby, field, users });
     }

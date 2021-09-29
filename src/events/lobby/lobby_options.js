@@ -7,7 +7,7 @@ module.exports = function (/** @type {Socket} */ socket, io) {
     if (dbLobby.has(data.code)) {
       switch (data.option) {
         case 'setVisibility': {
-          dbLobby.get(data.code).isPrivate = data.visibility;
+          dbLobby.get(data.code).visibility = data.visibility;
           emitter(io, data.code, data.visibility, 'setVisibility');
           break;
         }
