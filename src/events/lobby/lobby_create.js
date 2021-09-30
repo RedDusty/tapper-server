@@ -1,6 +1,6 @@
 const { Socket } = require('socket.io');
 const { dbLobby, dbOnline } = require('../../db');
-const { getFreeLobbies } = require('../../functions');
+const { getFreeLobbies, hostChangeOrDestroy, userLeave } = require('../../functions');
 
 function codeGenerator() {
   const arr = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
@@ -19,17 +19,17 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
   socket.on('LOBBY_CREATE', (data) => {
     socket.leave('users');
 
-    const hasGame = [...dbLobby].filter(([k, v]) => v.ownerUID === data.users[0].uid);
-
-    if (hasGame[0]) {
-      try {
-        dbLobby.delete(hasGame[0][1].code);
-        console.log(
-          `Game ${hasGame[0][1].code} already exists of user ${hasGame[0][1].users[0].nickname} | ${hasGame[0][1].users[0].uid} | ${socket.id}. Deleting...`
-        );
-      } catch (err) {
-        console.log(`Game ${hasGame[0][1].code} cannot be deleted. Error.`);
+    try {
+      const isHost = hostChangeOrDestroy(io, socket.id, 'Another game is created');
+      if (isHost !== true) {
+        try {
+          userLeave(io, socket.id);
+        } catch (err) {
+          console.log(err);
+        }
       }
+    } catch (err) {
+      console.log(err);
     }
 
     if (dbLobby.has(data.code)) dbLobby.delete(data.code);
