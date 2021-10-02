@@ -9,11 +9,12 @@ const http = require('http').Server(app);
 /** @type {socketio} */
 const io = require('socket.io')(http, { pingInterval: 5000 });
 
-const { dbLobby, dbUsers, dbOnline } = require('./db');
+const { dbOnline } = require('./db');
 
 const user_login = require('./events/user_login');
 const disconnect = require('./events/disconnect');
 const skin_change = require('./events/skin_change');
+const admin = require('./events/admin');
 
 const lobby_create = require('./events/lobby/lobby_create');
 const lobby_messenger = require('./events/lobby/lobby_messenger');
@@ -33,6 +34,7 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   user_login(socket, io);
   disconnect(socket, io);
   skin_change(socket, io);
+  admin(socket, io);
 
   lobby_create(socket, io);
   lobby_messenger(socket, io);

@@ -27,7 +27,7 @@ function getFreeLobbies() {
 function hostChangeOrDestroy(io, socketID, reason) {
   const disUser = [...dbOnline.values()].filter((user) => user.id === socketID)[0];
 
-  let isHost = false
+  let isHost = false;
 
   if (disUser) {
     const ownLobby = [...dbLobby.values()].filter((lobby) => lobby.ownerUID === disUser.uid)[0];
@@ -54,10 +54,13 @@ function hostChangeOrDestroy(io, socketID, reason) {
             code: ownLobby.code
           });
 
+          const usersRKey = removeKey(ownLobby.users);
+          Object.assign(ownLobby, { users: usersRKey });
+
           io.in(`LOBBY_${ownLobby.code}`).emit('LOBBY_GET_MESSAGES', ownLobby.messages);
           io.in(`LOBBY_${ownLobby.code}`).emit('LOBBY_USERS_UPDATE', {
             type: 'hostChange',
-            value: ownLobby.users,
+            value: ownLobby.usersRKey,
             lobby: ownLobby
           });
         }
@@ -68,7 +71,7 @@ function hostChangeOrDestroy(io, socketID, reason) {
     }
   }
 
-  return isHost
+  return isHost;
 }
 
 function userLeave(io, socketID) {
@@ -97,6 +100,9 @@ function userLeave(io, socketID) {
           code: disLobby[0].code
         });
 
+        const usersRKey = removeKey(disLobby[0].users);
+        Object.assign(disLobby[0], { users: usersRKey });
+
         io.in(`LOBBY_${disLobby[0].code}`).emit('LOBBY_GET_MESSAGES', disLobby[0].messages);
         io.in(`LOBBY_${disLobby[0].code}`).emit('LOBBY_USERS_UPDATE', {
           type: 'userLeave',
@@ -111,6 +117,27 @@ function userLeave(io, socketID) {
   }
 }
 
+function removeKey(users) {
+  let temp = users;
+  try {
+    if (users[0] && users[0].uid) {
+      temp = users.map((user) => ({ ...user, key: null }));
+      return temp;
+    } else if (users.users && users.users[0] && users.users[0].uid) {
+      temp = users.users.map((user) => ({ ...user, key: null }));
+      Object.assign(users, { users: temp });
+      return users;
+    } else
+    if (users.uid) {
+      users.key = null;
+      return users;
+    }
+  } catch (error) {}
+
+  return users;
+}
+
 exports.userLeave = userLeave;
 exports.hostChangeOrDestroy = hostChangeOrDestroy;
 exports.getFreeLobbies = getFreeLobbies;
+exports.removeKey = removeKey;

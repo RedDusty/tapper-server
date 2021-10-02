@@ -1,5 +1,5 @@
 const { Socket } = require('socket.io');
-const { dbLobby, dbOnline } = require('../db');
+const { dbOnline } = require('../db');
 const { getFreeLobbies, hostChangeOrDestroy, userLeave } = require('../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {

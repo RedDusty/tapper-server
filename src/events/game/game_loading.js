@@ -1,6 +1,6 @@
 const { Socket } = require('socket.io');
 const { dbLobby, dbGames } = require('../../db');
-const { getFreeLobbies } = require('../../functions');
+const { getFreeLobbies, removeKey } = require('../../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('GAME_START', (data) => {
@@ -27,9 +27,11 @@ module.exports = function (/** @type {Socket} */ socket, io) {
 
       const lobbyListArray = getFreeLobbies();
 
+      const usersRKey = removeKey(users)
+
       io.in('users').emit('LOBBY_GET', lobbyListArray);
       const field = { dots: dots, fieldX: Number(lobby.fieldX || 1), fieldY: Number(lobby.fieldY || 1) };
-      io.in(`LOBBY_${data.code}`).emit('GAME_LOADING', { lobby, field, users });
+      io.in(`LOBBY_${data.code}`).emit('GAME_LOADING', { lobby, field, users: usersRKey });
     }
   });
 };

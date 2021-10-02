@@ -1,6 +1,6 @@
 const { Socket } = require('socket.io');
 const { dbLobby } = require('../../db');
-const { getFreeLobbies } = require('../../functions');
+const { getFreeLobbies, removeKey } = require('../../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('LOBBY_USERS', (data) => {
@@ -23,6 +23,10 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           });
 
           const lobbyListArray = getFreeLobbies();
+
+          const usersRKey = removeKey(lobby.users);
+          Object.assign(lobby, {users: usersRKey})
+
           io.in('users').emit('LOBBY_GET', lobbyListArray);
           io.in(`LOBBY_${data.code}`).emit('LOBBY_GET_MESSAGES', lobby.messages);
           io.in(`LOBBY_${data.code}`).emit('LOBBY_USERS_UPDATE', {
@@ -57,6 +61,10 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           });
 
           const lobbyListArray = getFreeLobbies();
+
+          const usersRKey = removeKey(lobby.users);
+          Object.assign(lobby, {users: usersRKey})
+          
           io.in('users').emit('LOBBY_GET', lobbyListArray);
           io.in(`LOBBY_${data.code}`).emit('LOBBY_GET_MESSAGES', lobby.messages);
           socket.in(`LOBBY_${data.code}`).emit('LOBBY_USERS_UPDATE', {

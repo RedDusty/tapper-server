@@ -1,12 +1,15 @@
 const { Socket } = require('socket.io');
 const { dbLobby } = require('../../db');
+const { removeKey } = require('../../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('USER_LOADED', (data) => {
     if (dbLobby.has(data.lobby.code)) {
       const userIndex = dbLobby.get(data.lobby.code).users.findIndex((user) => (user.uid === data.user.uid));
       dbLobby.get(data.lobby.code).users[userIndex].isLoaded = true;
-      io.in(`LOBBY_${data.lobby.code}`).emit('USER_LOADED_RETURN', dbLobby.get(data.lobby.code).users);
+
+      const usersRKey = removeKey(dbLobby.get(data.lobby.code)).users;
+      io.in(`LOBBY_${data.lobby.code}`).emit('USER_LOADED_RETURN', usersRKey);
       if (isAllUsersLoaded(data.lobby.code)) {
         io.in(`LOBBY_${data.lobby.code}`).emit('GAME_LOADED', true);
       }
@@ -16,7 +19,7 @@ module.exports = function (/** @type {Socket} */ socket, io) {
 
 function isAllUsersLoaded(code) {
   let pass = false;
-  const users = dbLobby.get(code).users.forEach((user) => {
+  dbLobby.get(code).users.forEach((user) => {
     pass = user.isLoaded ? true : false;
   });
 
