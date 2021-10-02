@@ -1,5 +1,5 @@
 const { Socket } = require('socket.io');
-const { dbLobby } = require('../../db');
+const { dbLobby, dbGames } = require('../../db');
 const { getFreeLobbies } = require('../../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
@@ -23,6 +23,7 @@ module.exports = function (/** @type {Socket} */ socket, io) {
         });
       }
       dbLobby.get(data.code).visibility = 'game';
+      dbGames.set(data.code, dots);
 
       const lobbyListArray = getFreeLobbies();
 

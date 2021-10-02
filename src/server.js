@@ -9,10 +9,11 @@ const http = require('http').Server(app);
 /** @type {socketio} */
 const io = require('socket.io')(http, { pingInterval: 5000 });
 
-const { dbLobby, dbUsers } = require('./db');
+const { dbLobby, dbUsers, dbOnline } = require('./db');
 
 const user_login = require('./events/user_login');
 const disconnect = require('./events/disconnect');
+const skin_change = require('./events/skin_change');
 
 const lobby_create = require('./events/lobby/lobby_create');
 const lobby_messenger = require('./events/lobby/lobby_messenger');
@@ -21,6 +22,7 @@ const lobby_users = require('./events/lobby/lobby_users');
 
 const user_loaded = require('./events/game/user_loaded');
 const game_loading = require('./events/game/game_loading');
+const tap_dot = require('./events/game/tap_dot');
 
 const { getFreeLobbies } = require('./functions');
 
@@ -30,6 +32,7 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
 
   user_login(socket, io);
   disconnect(socket, io);
+  skin_change(socket, io);
 
   lobby_create(socket, io);
   lobby_messenger(socket, io);
@@ -37,12 +40,11 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   lobby_users(socket, io);
 
   user_loaded(socket, io);
-  game_loading(socket, io)
+  game_loading(socket, io);
+  tap_dot(socket, io);  
 
-  socket.on('LOBBY_GET_FIRST', (id) => {
-    const lobbyListArray = getFreeLobbies();
-    io.to(id).emit('LOBBY_GET', lobbyListArray);
-  });
+  socket.emit('ONLINE_UPDATE', dbOnline.size);
+  socket.emit('LOBBY_GET', getFreeLobbies());
 
   socket.on('SERVER_PING', (func) => {
     if (typeof func === 'function') {
