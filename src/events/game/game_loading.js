@@ -19,7 +19,7 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           posX: posX,
           posY: posY,
           user: undefined,
-          index: dot + 1
+          index: dot
         });
       }
       dbLobby.get(data.code).visibility = 'game';
