@@ -23,11 +23,20 @@ module.exports = function (/** @type {Socket} */ socket, io) {
         });
       }
       dbLobby.get(data.code).visibility = 'game';
-      dbGames.set(data.code, dots);
+      dbGames.set(data.code, {
+        dots: dots,
+        time: {
+          start: Date.now(),
+          end: null
+        },
+        replay: [],
+        addScore: [],
+        decreaseScore: []
+      });
 
       const lobbyListArray = getFreeLobbies();
 
-      const usersRKey = removeKey(users)
+      const usersRKey = removeKey(users);
 
       io.in('users').emit('LOBBY_GET', lobbyListArray);
       const field = { dots: dots, fieldX: Number(lobby.fieldX || 1), fieldY: Number(lobby.fieldY || 1) };

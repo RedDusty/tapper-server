@@ -9,20 +9,30 @@ module.exports = function (/** @type {Socket} */ socket, io) {
     const dotIndex = data.index;
     const code = data.code;
 
-    dbGames.get(code)[dotIndex].user = userData;
+    const gTemp = dbGames.get(code);
 
-    io.in(`LOBBY_${code}`).emit('GAME_TAP', dbGames.get(code));
+    if (gTemp.dots[dotIndex].user === undefined) {
+      dbGames.get(code).dots[dotIndex].user = userData;
 
-    const lobby = dbLobby.get(data.code);
+      dbGames.get(code).replay.push({
+        user: removeKey(data.user),
+        index: data.index,
+        time: Date.now()
+      });
 
-    const countPlayers = lobby.users.length;
-    const countField = Number(lobby.fieldX) * Number(lobby.fieldY);
+      io.in(`LOBBY_${code}`).emit('GAME_TAP', dbGames.get(code));
+    }
 
-    if (dbGames.get(code).filter((dot) => dot.user === undefined).length === 0) {
+    if (dbGames.get(code).dots.filter((dot) => dot.user === undefined).length === 0) {
+      const lobby = dbLobby.get(data.code);
+
+      const countPlayers = lobby.users.length;
+      const countField = Number(lobby.fieldX) * Number(lobby.fieldY);
+      
       if (lobby.users.length > 1) {
         const scoresArray = [];
         lobby.users.forEach((user) => {
-          const countDots = dbGames.get(data.code).filter((dot) => dot.user.uid === user.uid).length;
+          const countDots = dbGames.get(data.code).dots.filter((dot) => dot.user.uid === user.uid).length;
           scoresArray.push({ user: user, score: scoreCount(countPlayers, countField, countDots) });
         });
         const sortScoresArray = scoresArray.sort((userA, userB) => userA.score - userB.score);
@@ -36,12 +46,33 @@ module.exports = function (/** @type {Socket} */ socket, io) {
         const decreasedScores = removeKey(decreaseScoresArray);
         const addedScores = removeKey(addScoresArray);
 
-        io.in(`LOBBY_${code}`).emit('GAME_END_SCORE', {
-          decreasedScores,
-          addedScores
-        });
+        const game = dbGames.get(code);
+
+        const gameData = {
+          dots: game.dots,
+          time: {
+            start: game.time.start,
+            end: Date.now()
+          },
+          replay: game.replay,
+          addScore: addedScores,
+          decreaseScore: decreasedScores
+        };
+
+        io.in(`LOBBY_${code}`).emit('GAME_END_SCORE', gameData);
       } else {
-        io.in(`LOBBY_${code}`).emit('GAME_END', true);
+        const game = dbGames.get(code);
+
+        const gameData = {
+          dots: game.dots,
+          time: {
+            start: game.time.start,
+            end: Date.now()
+          },
+          replay: game.replay
+        };
+
+        io.in(`LOBBY_${code}`).emit('GAME_END', gameData);
       }
     }
   });
