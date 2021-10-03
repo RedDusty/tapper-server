@@ -1,7 +1,7 @@
 const { Socket } = require('socket.io');
-const { dbGames, dbLobby, dbOnline } = require('../../db');
+const { dbGames, dbLobby } = require('../../db');
 const { userScoreDecrease, userScoreAdd } = require('../../firebase');
-const { removeKey } = require('../../functions');
+const { removeKey, destroyLobbyAndGame } = require('../../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('TAP_DOT', (data) => {
@@ -74,6 +74,8 @@ module.exports = function (/** @type {Socket} */ socket, io) {
 
         io.in(`LOBBY_${code}`).emit('GAME_END', gameData);
       }
+
+      destroyLobbyAndGame(data.code);
     }
   });
 };

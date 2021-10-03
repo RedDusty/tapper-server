@@ -1,4 +1,4 @@
-const { dbLobby, dbOnline } = require('./db');
+const { dbLobby, dbOnline, dbGames } = require('./db');
 
 function getFreeLobbies() {
   const lobbyListPublic = new Map([...dbLobby].filter(([k, v]) => v.visibility === 'public'));
@@ -117,6 +117,11 @@ function userLeave(io, socketID) {
   }
 }
 
+function destroyLobbyAndGame(code) {
+  dbLobby.delete(code);
+  dbGames.delete(code);
+}
+
 function removeKey(users) {
   let temp = users;
   try {
@@ -137,6 +142,7 @@ function removeKey(users) {
   return users;
 }
 
+exports.destroyLobbyAndGame = destroyLobbyAndGame;
 exports.userLeave = userLeave;
 exports.hostChangeOrDestroy = hostChangeOrDestroy;
 exports.getFreeLobbies = getFreeLobbies;

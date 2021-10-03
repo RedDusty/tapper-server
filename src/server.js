@@ -26,6 +26,7 @@ const game_loading = require('./events/game/game_loading');
 const tap_dot = require('./events/game/tap_dot');
 
 const { getFreeLobbies } = require('./functions');
+const user_room = require('./events/user_room');
 
 io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   console.log(socket.id + ' is connected');
@@ -35,6 +36,7 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   disconnect(socket, io);
   skin_change(socket, io);
   score_get(socket, io);
+  user_room(socket, io);
 
   lobby_create(socket, io);
   lobby_messenger(socket, io);
