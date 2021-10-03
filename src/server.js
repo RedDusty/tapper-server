@@ -14,7 +14,7 @@ const { dbOnline } = require('./db');
 const user_login = require('./events/user_login');
 const disconnect = require('./events/disconnect');
 const skin_change = require('./events/skin_change');
-const admin = require('./events/admin');
+const score_get = require('./events/score_get');
 
 const lobby_create = require('./events/lobby/lobby_create');
 const lobby_messenger = require('./events/lobby/lobby_messenger');
@@ -34,7 +34,7 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
   user_login(socket, io);
   disconnect(socket, io);
   skin_change(socket, io);
-  admin(socket, io);
+  score_get(socket, io);
 
   lobby_create(socket, io);
   lobby_messenger(socket, io);
@@ -43,7 +43,7 @@ io.on('connection', (/** @type {socketio.Socket} socket*/ socket) => {
 
   user_loaded(socket, io);
   game_loading(socket, io);
-  tap_dot(socket, io);  
+  tap_dot(socket, io);
 
   socket.emit('ONLINE_UPDATE', dbOnline.size);
   socket.emit('LOBBY_GET', getFreeLobbies());

@@ -28,7 +28,7 @@ module.exports = function (/** @type {Socket} */ socket, io) {
 
       const countPlayers = lobby.users.length;
       const countField = Number(lobby.fieldX) * Number(lobby.fieldY);
-      
+
       if (lobby.users.length > 1) {
         const scoresArray = [];
         lobby.users.forEach((user) => {
@@ -80,9 +80,9 @@ module.exports = function (/** @type {Socket} */ socket, io) {
 
 function scoreCount(players, field, dots) {
   const playersMultiplier = 0.25 * players;
-  const fieldMultiplier = 1 + 0.1 * field;
-  const dotsMultiplier = 0.25 * dots;
-  const finalScore = 10 * ((dotsMultiplier / fieldMultiplier) * playersMultiplier);
+  const fieldMultiplier = 0.1 * field;
+  const dotsMultiplier = 0.25 * (1 + dots);
+  const finalScore = playersMultiplier * fieldMultiplier * dotsMultiplier;
 
   return finalScore;
 }
