@@ -70,9 +70,5 @@ const server = http.listen(PORT, (err) => {
   if (err) {
     throw err;
   }
-<<<<<<< HEAD
   console.log("Server started - " + PORT);
-=======
-  console.log("Server started - " + (PORT));
->>>>>>> 371f1c134b4dc45ddb62c8e6814a333f480133fe
 });
