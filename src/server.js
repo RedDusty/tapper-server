@@ -17,6 +17,8 @@ app.use(
 );
 app.set("port", PORT);
 
+console.log(process.env.DEPLOY_APP);
+
 const http = require("http").Server(app);
 
 /** @type {socketio} */
