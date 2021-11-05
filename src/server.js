@@ -7,17 +7,18 @@ const cors = require("cors");
 const PORT = process.env.PORT || 3000;
 
 const app = express();
-app.use(
-  cors({
-    origin: process.env.DEPLOY_APP,
-    credentials: true,
-    optionsSuccessStatus: 200,
-    methods: ["GET"],
-  })
-);
-app.set("port", PORT);
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Credentials", true);
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin,X-Requested-With,Content-Type,Accept,content-type,application/json"
+  );
+  next();
+});
 
-console.log(process.env.DEPLOY_APP);
+app.set("port", PORT);
 
 const http = require("http").Server(app);
 
