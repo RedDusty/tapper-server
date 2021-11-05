@@ -1,29 +1,22 @@
 const express = require("express");
-const socketio = require("socket.io");
-require("dotenv").config();
-
-const cors = require("cors");
-
-const PORT = process.env.PORT || 3000;
 
 const app = express();
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Credentials", true);
-  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin,X-Requested-With,Content-Type,Accept,content-type,application/json"
-  );
-  next();
+
+require("dotenv").config();
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, (err) => {
+  if (err) {
+    throw err;
+  }
+  console.log("Server started - " + PORT);
 });
 
-app.set("port", PORT);
-
-const http = require("http").Server(app);
-
 /** @type {socketio} */
-const io = require("socket.io")(http, { pingInterval: 5000 });
+const io = require("socket.io")(server, {
+  cors: true,
+  origin: process.env.DEPLOY_APP,
+  pingInterval: 5000,
+});
 
 const { dbOnline } = require("./db");
 
@@ -71,15 +64,4 @@ io.on("connection", (/** @type {socketio.Socket} socket*/ socket) => {
       func();
     }
   });
-});
-
-app.get("/", (req, res) => {
-  res.send("Server online!");
-});
-
-const server = http.listen(PORT, (err) => {
-  if (err) {
-    throw err;
-  }
-  console.log("Server started - " + PORT);
 });
