@@ -57,3 +57,24 @@ exports.userScoreDecrease = async function userScoreDecrease(userUID, score) {
     key
   });
 };
+
+/**
+ *
+ * @param {string} userUID
+ * @param {object} skin
+ * @param {string} skin.type
+ * @param {string} skin.color
+ * @param {boolean} skin.withBorder
+ * @param {string} skin.borderColor
+ * @param {string} skin.borderStyle
+ * @param {number} skin.borderWidth
+ */
+exports.userSkinChange = async function userSkinChange(userUID, skin) {
+  const docRef = doc(firestore, 'users', userUID);
+
+  const userDoc = await getDoc(docRef);
+
+  await updateDoc(docRef, {
+    skin: skin
+  })
+}

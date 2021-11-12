@@ -1,11 +1,14 @@
 const { Socket } = require('socket.io');
 const { dbOnline, dbLobby } = require('../db');
+const { userSkinChange } = require('../firebase');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('SKIN_CHANGE', (data) => {
     if (dbOnline.get(data.user.id)) {
       dbOnline.get(data.user.id).skinOptions = data.skinData;
     }
+
+    userSkinChange(data.user.uid, data.user.skin);
 
     if (dbLobby.get(data.code)) {
       const lobby = dbLobby.get(data.code);
