@@ -11,6 +11,34 @@ const server = app.listen(PORT, (err) => {
   console.log("Server started - " + PORT);
 });
 
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    process.env.CLIENT_DOMAIN_FIRST,
+    process.env.CLIENT_DOMAIN_SECOND,
+    process.env.CLIENT_DOMAIN_THIRD,
+  ];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Methods", "GET");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", true);
+  return next();
+});
+
+app.get("/checker", (req, res) => {
+  res.status(200).json({ message: "online" });
+});
+
+app.get("/data", (req, res) => {
+  res.status(200).json({
+    message: "connected",
+    online: dbOnline.size + 1,
+    lobbies: getFreeLobbies(),
+  });
+});
+
 /** @type {socketio} */
 const io = require("socket.io")(server, {
   cors: true,
@@ -55,9 +83,6 @@ io.on("connection", (/** @type {socketio.Socket} socket*/ socket) => {
   user_loaded(socket, io);
   game_loading(socket, io);
   tap_dot(socket, io);
-
-  socket.emit("ONLINE_UPDATE", dbOnline.size);
-  socket.emit("LOBBY_GET", getFreeLobbies());
 
   socket.on("SERVER_PING", (func) => {
     if (typeof func === "function") {
