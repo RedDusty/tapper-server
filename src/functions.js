@@ -137,9 +137,10 @@ function removeKey(users) {
       users.key = null;
       return users;
     }
-  } catch (error) {}
-
-  return users;
+    throw new Error('Key is not removed! - functions.js [141]')
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 exports.destroyLobbyAndGame = destroyLobbyAndGame;
