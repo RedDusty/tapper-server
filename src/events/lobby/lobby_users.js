@@ -1,45 +1,37 @@
-const { Socket } = require('socket.io');
-const { dbLobby } = require('../../db');
-const { getFreeLobbies, removeKey } = require('../../functions');
+const { Socket } = require("socket.io");
+const { dbLobby } = require("../../db");
+const {
+  getFreeLobbies,
+  removeKey,
+  hostChangeOrDestroy,
+} = require("../../functions");
 
 module.exports = function (/** @type {Socket} */ socket, io) {
-  socket.on('LOBBY_USERS', (data) => {
+  socket.on("LOBBY_USERS", (data) => {
     switch (data.action) {
-      case 'userJoin': {
+      case "userJoin": {
         if (dbLobby.has(data.code)) {
-          socket.leave('users');
+          socket.leave("users");
           socket.join(`LOBBY_${data.code}`);
           const lobby = dbLobby.get(data.code);
           lobby.users.push(data.user);
           lobby.inLobbyPlayers = String(lobby.users.length);
-          lobby.messages.push({
-            avatar: 'system',
-            id: 'system',
-            nickname: 'System',
-            uid: 'system',
-            message: `${data.user.nickname} connected`,
-            time: Date.now(),
-            code: data.code
-          });
 
-          const lobbyListArray = getFreeLobbies();
-
-          const usersRKey = removeKey(lobby.users);
-          Object.assign(lobby, {users: usersRKey})
-
-          io.in('users').emit('LOBBY_GET', lobbyListArray);
-          io.in(`LOBBY_${data.code}`).emit('LOBBY_GET_MESSAGES', lobby.messages);
-          io.in(`LOBBY_${data.code}`).emit('LOBBY_USERS_UPDATE', {
-            type: 'userJoin',
-            value: lobby.users,
-            lobby: lobby
-          });
+          emmiter(
+            socket,
+            io,
+            lobby,
+            data.action,
+            data.user.nickname,
+            data.user.uid,
+            data.user.id
+          );
         }
         return 0;
       }
-      case 'userLeave': {
+      case "userLeave": {
         if (dbLobby.has(data.code)) {
-          socket.join('users');
+          socket.join("users");
           socket.leave(`LOBBY_${data.code}`);
           const lobby = dbLobby.get(data.code);
           lobby.users.forEach((user, index) => {
@@ -50,28 +42,69 @@ module.exports = function (/** @type {Socket} */ socket, io) {
               return 0;
             }
           });
-          lobby.messages.push({
-            avatar: 'system',
-            id: 'system',
-            nickname: 'System',
-            uid: 'system',
-            message: `${data.user.nickname} disconnected`,
-            time: Date.now(),
-            code: data.code
+
+          hostChangeOrDestroy(io, socket.id, "User leave");
+
+          emmiter(
+            socket,
+            io,
+            lobby,
+            data.action,
+            data.user.nickname,
+            data.user.uid,
+            data.user.id
+          );
+        }
+        return 0;
+      }
+      case "userKick": {
+        if (dbLobby.has(data.code)) {
+          const lobby = dbLobby.get(data.code);
+          lobby.users.forEach((user, index) => {
+            if (user.id === data.user.id) {
+              lobby.users.splice(index, 1);
+              lobby.inLobbyPlayers = String(lobby.users.length);
+
+              return 0;
+            }
           });
 
-          const lobbyListArray = getFreeLobbies();
+          emmiter(
+            socket,
+            io,
+            lobby,
+            data.action,
+            data.user.nickname,
+            data.user.uid,
+            data.user.id
+          );
+        }
+        return 0;
+      }
+      case "userOwner": {
+        if (dbLobby.has(data.code)) {
+          const lobby = dbLobby.get(data.code);
+          lobby.users.forEach((user, index) => {
+            if (user.id === data.user.id) {
+              const newOwnerUser = user;
+              lobby.users.splice(index, 1);
+              lobby.users.unshift(newOwnerUser);
+              lobby.ownerUID = newOwnerUser.uid;
+              lobby.nickname = newOwnerUser.nickname;
 
-          const usersRKey = removeKey(lobby.users);
-          Object.assign(lobby, {users: usersRKey})
-          
-          io.in('users').emit('LOBBY_GET', lobbyListArray);
-          io.in(`LOBBY_${data.code}`).emit('LOBBY_GET_MESSAGES', lobby.messages);
-          socket.in(`LOBBY_${data.code}`).emit('LOBBY_USERS_UPDATE', {
-            type: 'userLeave',
-            value: lobby.users,
-            lobby: lobby
+              return 0;
+            }
           });
+
+          emmiter(
+            socket,
+            io,
+            lobby,
+            data.action,
+            data.user.nickname,
+            data.user.uid,
+            data.user.id
+          );
         }
         return 0;
       }
@@ -80,3 +113,43 @@ module.exports = function (/** @type {Socket} */ socket, io) {
     }
   });
 };
+
+/**
+ *
+ * @param {*} lobby
+ * @param {"userLeave" | "userJoin" | "userKick" | "userOwner"} type
+ */
+function emmiter(socket, io, lobby, type, nickname, uid, id) {
+  const message = () => {
+    if (type === "userJoin") return "connected";
+    if (type === "userLeave") return "disconnected";
+    if (type === "userKick") return "was kicked";
+    if (type === "userOwner") return "now is owner";
+  };
+  lobby.messages.push({
+    avatar: "system",
+    id: "system",
+    nickname: "System",
+    uid: "system",
+    message: `${nickname} ${message()}`,
+    time: Date.now(),
+    code: lobby.code,
+  });
+
+  const lobbyListArray = getFreeLobbies();
+
+  const usersRKey = removeKey(lobby.users);
+  Object.assign(lobby, { users: usersRKey });
+
+  io.in("users").emit("LOBBY_GET", lobbyListArray);
+  io.in(`LOBBY_${lobby.code}`).emit("LOBBY_GET_MESSAGES", lobby.messages);
+  io.in(`LOBBY_${lobby.code}`).emit("LOBBY_USERS_UPDATE", {
+    type: type,
+    value: lobby.users,
+    lobby: lobby,
+    uid: uid,
+  });
+  if (type === "userKick") {
+    socket.broadcast.to(id).emit("LOBBY_KICK");
+  }
+}

@@ -67,13 +67,6 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           emitterOption(io, data.code, data.maxPlayers, "setMaxPlayers");
           break;
         }
-        // case 'userKick': {
-        //   const users = lobby.users;
-        //   const newUsers = users.filter((u, i) => data.kickID !== u.id);
-        //   lobby.users = newUsers;
-        //   emitterOption(io, data.code, data.kickID, 'userKick');
-        //   break;
-        // }
         default:
           break;
       }
