@@ -11,10 +11,8 @@ function getFreeLobbies() {
       ownerUID: data.ownerUID,
       avatar: lobby[1].users[0].avatar,
       nickname: data.nickname,
-      shape: data.shape,
       inLobbyPlayers: data.inLobbyPlayers,
       maxPlayers: data.maxPlayers,
-      rounds: data.rounds,
       fieldX: data.fieldX,
       fieldY: data.fieldY,
       code: data.code
