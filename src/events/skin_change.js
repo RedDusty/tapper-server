@@ -8,7 +8,7 @@ module.exports = function (/** @type {Socket} */ socket, io) {
       dbOnline.get(data.user.id).skin = data.skinData;
     }
 
-    userSkinChange(data.user.uid, data.user.skin);
+    userSkinChange(data.user.uid, data.skinData);
 
     if (dbLobby.get(data.code)) {
       const lobby = dbLobby.get(data.code);
