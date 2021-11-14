@@ -7,7 +7,6 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
     
     let isDuplicate = false
     dbOnline.forEach((user) => {
-      console.log(user);
       if (user.uid === uid) {
         isDuplicate = true;
       }

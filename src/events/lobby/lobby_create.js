@@ -32,8 +32,6 @@ module.exports = function (/** @type {Socket} socket*/ socket, io) {
       console.log(err);
     }
 
-    if (dbLobby.has(data.code)) dbLobby.delete(data.code);
-
     let code = codeGenerator();
 
     do {

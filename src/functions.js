@@ -128,16 +128,56 @@ function userLeave(io, socketID) {
         const userIndex = disLobby[0].users.findIndex(
           (user) => user.id === socketID
         );
+
         dbLobby.get(disLobby[0].code).users[userIndex].isLeft = true;
+        dbLobby.get(disLobby[0].code).users[userIndex].isLoaded = true;
+
+        if (isAllUsersLeft(disLobby[0].code)) {
+          console.log(
+            `Lobby ${disLobby[0].code} has been destroyed. Owner: ${disLobby[0].ownerUID} | ${disLobby[0].nickname} | ${disLobby[0].uid}. Reason: All users left`
+          );
+          destroyLobbyAndGame(disLobby[0].code);
+          return 0;
+        }
+
+        const usersRKey = removeKey(dbLobby.get(disLobby[0].code)).users;
+
+        io.in(`LOBBY_${disLobby[0].code}`).emit(
+          "USER_LOADED_RETURN",
+          usersRKey
+        );
+
+        if (isAllUsersLoaded(disLobby[0].code)) {
+          io.in(`LOBBY_${disLobby[0].code}`).emit("GAME_LOADED", true);
+        }
       }
     }
   }
 }
 
+function isAllUsersLeft(code) {
+  let pass = false;
+  if (
+    dbLobby.get(code).users.filter((e) => e.isLeft === true).length ===
+    dbLobby.get(code).users.length
+  ) {
+    pass = true;
+  }
+  return pass;
+}
+
+function isAllUsersLoaded(code) {
+  let pass = false;
+  if (
+    dbLobby.get(code).users.filter((e) => e.isLoaded === true).length ===
+    dbLobby.get(code).users.length
+  ) {
+    pass = true;
+  }
+  return pass;
+}
+
 function destroyLobbyAndGame(code) {
-  console.log(
-    `Lobby and Game ${ownLobby.code} has been destroyed. Reason: Zero users in lobby / game`
-  );
   dbLobby.delete(code);
   dbGames.delete(code);
 }
@@ -156,3 +196,5 @@ exports.userLeave = userLeave;
 exports.hostChangeOrDestroy = hostChangeOrDestroy;
 exports.getFreeLobbies = getFreeLobbies;
 exports.removeKey = removeKey;
+exports.isAllUsersLeft = isAllUsersLeft;
+exports.isAllUsersLoaded = isAllUsersLoaded;

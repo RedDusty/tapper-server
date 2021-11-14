@@ -1,6 +1,6 @@
 const { Socket } = require('socket.io');
 const { dbLobby } = require('../../db');
-const { removeKey } = require('../../functions');
+const { removeKey, isAllUsersLoaded } = require('../../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('USER_LOADED', (data) => {
@@ -16,12 +16,3 @@ module.exports = function (/** @type {Socket} */ socket, io) {
     }
   });
 };
-
-function isAllUsersLoaded(code) {
-  let pass = false;
-  dbLobby.get(code).users.forEach((user) => {
-    pass = user.isLoaded ? true : false;
-  });
-
-  return pass;
-}

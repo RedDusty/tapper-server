@@ -1,17 +1,17 @@
-const { Socket } = require('socket.io');
-const { dbGames, dbLobby } = require('../../db');
-const { userScoreDecrease, userScoreAdd } = require('../../firebase');
-const { removeKey } = require('../../functions');
+const { Socket } = require("socket.io");
+const { dbGames, dbLobby } = require("../../db");
+const { userScoreDecrease, userScoreAdd } = require("../../firebase");
+const { removeKey, destroyLobbyAndGame } = require("../../functions");
 
 module.exports = function (/** @type {Socket} */ socket, io) {
-  socket.on('TAP_DOT', (data) => {
+  socket.on("TAP_DOT", (data) => {
     const userData = removeKey(data.user);
     const dotIndex = data.index;
     const code = data.code;
 
     const gTemp = dbGames.get(code);
 
-    if (dbGames.get(code) === false) {
+    if (!dbGames.has(code)) {
       return 0;
     }
 
@@ -21,13 +21,16 @@ module.exports = function (/** @type {Socket} */ socket, io) {
       dbGames.get(code).replay.push({
         user: removeKey(data.user),
         index: data.index,
-        time: Date.now()
+        time: Date.now(),
       });
 
-      io.in(`LOBBY_${code}`).emit('GAME_TAP', dbGames.get(code));
+      io.in(`LOBBY_${code}`).emit("GAME_TAP", dbGames.get(code));
     }
 
-    if (dbGames.get(code).dots.filter((dot) => dot.user === undefined).length === 0) {
+    if (
+      dbGames.get(code).dots.filter((dot) => dot.user === undefined).length ===
+      0
+    ) {
       const lobby = dbLobby.get(data.code);
 
       const countPlayers = lobby.users.length;
@@ -36,16 +39,32 @@ module.exports = function (/** @type {Socket} */ socket, io) {
       if (lobby.users.length > 1) {
         const scoresArray = [];
         lobby.users.forEach((user) => {
-          const countDots = dbGames.get(data.code).dots.filter((dot) => dot.user.uid === user.uid).length;
-          scoresArray.push({ user: user, score: scoreCount(countPlayers, countField, countDots) });
+          const countDots = dbGames
+            .get(data.code)
+            .dots.filter((dot) => dot.user.uid === user.uid).length;
+          scoresArray.push({
+            user: user,
+            score: scoreCount(countPlayers, countField, countDots),
+          });
         });
-        const sortScoresArray = scoresArray.sort((userA, userB) => userA.score - userB.score);
+        const sortScoresArray = scoresArray.sort(
+          (userA, userB) => userA.score - userB.score
+        );
 
-        const decreaseScoresArray = sortScoresArray.slice(0, Math.ceil(sortScoresArray.length / 2));
-        const addScoresArray = sortScoresArray.slice(Math.ceil(sortScoresArray.length / 2));
+        const decreaseScoresArray = sortScoresArray.slice(
+          0,
+          Math.ceil(sortScoresArray.length / 2)
+        );
+        const addScoresArray = sortScoresArray.slice(
+          Math.ceil(sortScoresArray.length / 2)
+        );
 
-        decreaseScoresArray.forEach((dUser) => userScoreDecrease(dUser.user.uid, dUser.score));
-        addScoresArray.forEach((aUser) => userScoreAdd(aUser.user.uid, aUser.score));
+        decreaseScoresArray.forEach((dUser) =>
+          userScoreDecrease(dUser.user.uid, dUser.score)
+        );
+        addScoresArray.forEach((aUser) =>
+          userScoreAdd(aUser.user.uid, aUser.score)
+        );
 
         const decreasedScores = removeKey(decreaseScoresArray);
         const addedScores = removeKey(addScoresArray);
@@ -56,14 +75,14 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           dots: game.dots,
           time: {
             start: game.time.start,
-            end: Date.now()
+            end: Date.now(),
           },
           replay: game.replay,
           addScore: addedScores,
-          decreaseScore: decreasedScores
+          decreaseScore: decreasedScores,
         };
 
-        io.in(`LOBBY_${code}`).emit('GAME_END_SCORE', gameData);
+        io.in(`LOBBY_${code}`).emit("GAME_END_SCORE", gameData);
       } else {
         const game = dbGames.get(code);
 
@@ -71,13 +90,18 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           dots: game.dots,
           time: {
             start: game.time.start,
-            end: Date.now()
+            end: Date.now(),
           },
-          replay: game.replay
+          replay: game.replay,
         };
 
-        io.in(`LOBBY_${code}`).emit('GAME_END', gameData);
+        io.in(`LOBBY_${code}`).emit("GAME_END", gameData);
       }
+
+      console.log(
+        `Lobby ${lobby.code} has been destroyed. Owner: ${lobby.ownerUID} | ${lobby.nickname} | ${lobby.uid}. Reason: The game is over.`
+      );
+      destroyLobbyAndGame(lobby.code);
     }
   });
 };
