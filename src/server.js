@@ -27,11 +27,11 @@ app.use((req, res, next) => {
   return next();
 });
 
-app.get("/checker", (req, res) => {
+app.get("checker", (req, res) => {
   res.status(200).json({ message: "online" });
 });
 
-app.get("/data", (req, res) => {
+app.get("data", (req, res) => {
   res.status(200).json({
     message: "connected",
     online: dbOnline.size + 1,
