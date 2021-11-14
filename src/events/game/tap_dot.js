@@ -1,7 +1,7 @@
 const { Socket } = require('socket.io');
 const { dbGames, dbLobby } = require('../../db');
 const { userScoreDecrease, userScoreAdd } = require('../../firebase');
-const { removeKey, destroyLobbyAndGame } = require('../../functions');
+const { removeKey } = require('../../functions');
 
 module.exports = function (/** @type {Socket} */ socket, io) {
   socket.on('TAP_DOT', (data) => {
@@ -10,6 +10,10 @@ module.exports = function (/** @type {Socket} */ socket, io) {
     const code = data.code;
 
     const gTemp = dbGames.get(code);
+
+    if (dbGames.get(code) === false) {
+      return 0;
+    }
 
     if (gTemp.dots[dotIndex].user === undefined) {
       dbGames.get(code).dots[dotIndex].user = userData;
@@ -74,8 +78,6 @@ module.exports = function (/** @type {Socket} */ socket, io) {
 
         io.in(`LOBBY_${code}`).emit('GAME_END', gameData);
       }
-
-      destroyLobbyAndGame(data.code);
     }
   });
 };

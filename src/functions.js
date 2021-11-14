@@ -75,11 +75,6 @@ function hostChangeOrDestroy(io, socketID, reason) {
             lobby: ownLobby,
           });
         }
-      } else {
-        const userIndex = ownLobby.users.findIndex(
-          (user) => user.id === socketID
-        );
-        dbLobby.get(ownLobby.code).users[userIndex].isLeft = true;
       }
     }
   }
@@ -140,6 +135,9 @@ function userLeave(io, socketID) {
 }
 
 function destroyLobbyAndGame(code) {
+  console.log(
+    `Lobby and Game ${ownLobby.code} has been destroyed. Reason: Zero users in lobby / game`
+  );
   dbLobby.delete(code);
   dbGames.delete(code);
 }

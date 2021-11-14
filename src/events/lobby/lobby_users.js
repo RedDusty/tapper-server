@@ -4,6 +4,7 @@ const {
   getFreeLobbies,
   removeKey,
   hostChangeOrDestroy,
+  destroyLobbyAndGame,
 } = require("../../functions");
 
 module.exports = function (/** @type {Socket} */ socket, io) {
@@ -44,6 +45,10 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           });
 
           hostChangeOrDestroy(io, socket.id, "User leave");
+
+          if (lobby.users.length === 0) {
+            destroyLobbyAndGame(data.code);
+          }
 
           emmiter(
             socket,
