@@ -64,12 +64,14 @@ const tap_dot = require("./events/game/tap_dot");
 
 const { getFreeLobbies } = require("./functions");
 const user_room = require("./events/user_room");
+const user_logout = require('./events/user_logout');
 
 io.on("connection", (/** @type {socketio.Socket} socket*/ socket) => {
   console.log(socket.id + " is connected");
   socket.send(socket.id);
 
   user_login(socket, io);
+  user_logout(socket, io);
   disconnect(socket, io);
   skin_change(socket, io);
   score_get(socket, io);

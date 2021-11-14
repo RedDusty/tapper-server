@@ -4,6 +4,20 @@ const { getFreeLobbies } = require('../functions');
 
 module.exports = function (/** @type {Socket} socket*/ socket, io) {
   socket.on('USER_LOGIN', ({ nickname, avatar, skin, score, firstLogin, uid, id, banned, skinURL, key }) => {
+    
+    let isDuplicate = false
+    dbOnline.forEach((user) => {
+      console.log(user);
+      if (user.uid === uid) {
+        isDuplicate = true;
+      }
+    })
+
+    if (isDuplicate) {
+      socket.emit("ACCOUNT_DUPLICATE", true)
+      return 0;
+    }
+
     if (id) {
       if (!dbOnline.has(id)) {
         dbOnline.set(id, {
