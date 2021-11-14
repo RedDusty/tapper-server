@@ -2,6 +2,7 @@ const express = require("express");
 
 const app = express();
 
+const { dbOnline, globalChat } = require("./db");
 require("dotenv").config();
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, (err) => {
@@ -13,9 +14,14 @@ const server = app.listen(PORT, (err) => {
 
 app.use((req, res, next) => {
   const allowedOrigins = [
+    process.env.DEPLOY_APP,
     process.env.CLIENT_DOMAIN_FIRST,
     process.env.CLIENT_DOMAIN_SECOND,
     process.env.CLIENT_DOMAIN_THIRD,
+    process.env.DEPLOY_APP + "/",
+    process.env.CLIENT_DOMAIN_FIRST + "/",
+    process.env.CLIENT_DOMAIN_SECOND + "/",
+    process.env.CLIENT_DOMAIN_THIRD + "/",
   ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -27,15 +33,16 @@ app.use((req, res, next) => {
   return next();
 });
 
-app.get("checker", (req, res) => {
+app.get("/checker", (req, res) => {
   res.status(200).json({ message: "online" });
 });
 
-app.get("data", (req, res) => {
+app.get("/data", (req, res) => {
   res.status(200).json({
     message: "connected",
     online: dbOnline.size + 1,
     lobbies: getFreeLobbies(),
+    messages: globalChat
   });
 });
 
@@ -46,7 +53,6 @@ const io = require("socket.io")(server, {
   pingInterval: 5000,
 });
 
-const { dbOnline } = require("./db");
 
 const user_login = require("./events/user_login");
 const disconnect = require("./events/disconnect");
@@ -64,12 +70,14 @@ const tap_dot = require("./events/game/tap_dot");
 
 const { getFreeLobbies } = require("./functions");
 const user_room = require("./events/user_room");
-const user_logout = require('./events/user_logout');
+const user_logout = require("./events/user_logout");
+const global_chat_messenger = require('./events/global/global_chat_messenger');
 
 io.on("connection", (/** @type {socketio.Socket} socket*/ socket) => {
   console.log(socket.id + " is connected");
   socket.send(socket.id);
 
+  global_chat_messenger(socket, io)
   user_login(socket, io);
   user_logout(socket, io);
   disconnect(socket, io);
