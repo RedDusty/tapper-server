@@ -37,37 +37,63 @@ module.exports = function (/** @type {Socket} */ socket, io) {
       const countField = Number(lobby.fieldX) * Number(lobby.fieldY);
 
       if (lobby.users.length > 1) {
-        const scoresArray = [];
+        const usersByScore = lobby.users
+          .slice(0)
+          .sort((userA, userB) => userA.score - userB.score);
+        const usersDots = [];
         lobby.users.forEach((user) => {
-          const countDots = dbGames
+          const dots = dbGames
             .get(data.code)
             .dots.filter((dot) => dot.user.uid === user.uid).length;
-          scoresArray.push({
-            user: user,
-            score: scoreCount(countPlayers, countField, countDots),
-          });
+          usersDots.push({ user: user, dots: dots });
         });
-        const sortScoresArray = scoresArray.sort(
-          (userA, userB) => userA.score - userB.score
-        );
+        const usersByDots = usersDots
+          .slice(0)
+          .sort((userA, userB) => userA.dots - userB.dots);
 
-        const decreaseScoresArray = sortScoresArray.slice(
+        const minusScore = usersByDots.slice(
           0,
-          Math.ceil(sortScoresArray.length / 2)
+          Math.ceil(usersByDots.length / 2)
         );
-        const addScoresArray = sortScoresArray.slice(
-          Math.ceil(sortScoresArray.length / 2)
-        );
+        const plusScore = usersByDots.slice(Math.ceil(usersByDots.length / 2));
 
-        decreaseScoresArray.forEach((dUser) =>
-          userScoreDecrease(dUser.user.uid, dUser.score)
-        );
-        addScoresArray.forEach((aUser) =>
-          userScoreAdd(aUser.user.uid, aUser.score)
-        );
+        minusScore.forEach((uData, index) => {
+          const scoreIndex = usersByScore.findIndex(
+            (u) => u.id === uData.user.id
+          );
+          const dotsIndex = usersByDots.findIndex(
+            (u) => u.user.id === uData.user.id
+          );
+          minusScore[index] = {
+            user: uData.user,
+            dots: uData.dots,
+            score: 0 - scoreIndex - dotsIndex,
+          };
+        });
 
-        const decreasedScores = removeKey(decreaseScoresArray);
-        const addedScores = removeKey(addScoresArray);
+        plusScore.forEach((uData, index) => {
+          const scoreIndex = usersByScore.findIndex(
+            (u) => u.id === uData.user.id
+          );
+          const dotsIndex = usersByDots.findIndex(
+            (u) => u.user.id === uData.user.id
+          );
+          plusScore[index] = {
+            user: uData.user,
+            dots: uData.dots,
+            score: 0 + scoreIndex + dotsIndex,
+          };
+        });
+
+        console.log(plusScore, minusScore);
+
+        minusScore.forEach((dUser) => {
+          userScoreDecrease(dUser.user.uid, dUser.score);
+        });
+        plusScore.forEach((aUser) => userScoreAdd(aUser.user.uid, aUser.score));
+
+        const decreasedScores = removeKey(minusScore);
+        const addedScores = removeKey(plusScore);
 
         const game = dbGames.get(code);
 
@@ -105,12 +131,3 @@ module.exports = function (/** @type {Socket} */ socket, io) {
     }
   });
 };
-
-function scoreCount(players, field, dots) {
-  const playersMultiplier = 0.25 * players;
-  const fieldMultiplier = 0.1 * field;
-  const dotsMultiplier = 0.25 * (1 + dots);
-  const finalScore = playersMultiplier * fieldMultiplier * dotsMultiplier;
-
-  return finalScore;
-}
