@@ -91,6 +91,18 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           emitterOption(io, data.code, data.difficulty, "setDifficulty");
           break;
         }
+        case "setSpeed": {
+          emitterMessage(
+            io,
+            data,
+            lobby.bot.speed,
+            data.speed,
+            "Bot speed"
+          );
+          lobby.bot.speed = data.speed;
+          emitterOption(io, data.code, data.speed, "setSpeed");
+          break;
+        }
         default:
           break;
       }

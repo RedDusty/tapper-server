@@ -18,7 +18,7 @@ module.exports = function (/** @type {Socket} */ socket, io) {
         if (data.lobby.bot.isTurned) {
           setTimeout(() => {
             const field = Number(data.lobby.fieldX) * Number(data.lobby.fieldY);
-            botTap(io, socket, data.lobby.code, field, data.lobby.bot.difficulty);
+            botTap(io, socket, data.lobby.code, field, data.lobby.bot.difficulty, data.lobby.bot.speed);
           }, 3000);
         }
       }

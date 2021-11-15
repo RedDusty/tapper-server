@@ -155,7 +155,7 @@ function userLeave(io, socketID) {
             setTimeout(() => {
               const field =
                 Number(disLobby[0].fieldX) * Number(disLobby[0].fieldY);
-              botTap(disLobby[0].code, field, disLobby[0].bot.difficulty);
+              botTap(disLobby[0].code, field, disLobby[0].bot.difficulty, disLobby[0].bot.speed);
             }, 3000);
           }
         }
@@ -223,9 +223,10 @@ function getBotConfig() {
   };
 }
 
-function botTap(io, socket, code, field, difficulty) {
+function botTap(io, socket, code, field, difficulty, speed) {
   if (dbGames.has(code)) {
     const hard = () => {
+      if (difficulty === "custom") return Number(speed || 6)
       if (difficulty === "cheater-3") return 30;
       if (difficulty === "cheater-2") return 27;
       if (difficulty === "cheater-1") return 24;
@@ -234,6 +235,7 @@ function botTap(io, socket, code, field, difficulty) {
       if (difficulty === "hard") return 8;
       if (difficulty === "medium") return 6;
       if (difficulty === "easy") return 4;
+      return 6
     };
     if (dbGames.has(code)) {
       const rand =
@@ -249,7 +251,7 @@ function botTap(io, socket, code, field, difficulty) {
             freeIndexes[
               Math.floor(Math.random() * (freeIndexes.length - 0) + 0)
             ];
-          botTap(io, socket, code, field, difficulty);
+          botTap(io, socket, code, field, difficulty, speed);
 
           dotTap(io, socket, dotPlace.index, code, getBotConfig());
         }
@@ -333,8 +335,6 @@ function dotTap(io, socket, dotIndex, code, user) {
           score: 0 + scoreIndex + dotsIndex + 1,
         };
       });
-
-      console.log(plusScore, minusScore);
 
       minusScore.forEach((dUser) => {
         if (dUser.user.id !== "system") {
