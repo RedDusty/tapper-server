@@ -316,12 +316,12 @@ function dotTap(io, socket, dotIndex, code, user) {
         minusScore[index] = {
           user: uData.user,
           dots: uData.dots,
-          score: 0 - scoreIndex - dotsIndex,
+          score: 0 - scoreIndex - dotsIndex - 1,
         };
       });
 
       plusScore.forEach((uData, index) => {
-        const scoreIndex = usersByScore.findIndex(
+        const scoreIndex = usersByScore.slice(0).reverse().findIndex(
           (u) => u.id === uData.user.id
         );
         const dotsIndex = usersByDots.findIndex(
@@ -330,7 +330,7 @@ function dotTap(io, socket, dotIndex, code, user) {
         plusScore[index] = {
           user: uData.user,
           dots: uData.dots,
-          score: 0 + scoreIndex + dotsIndex,
+          score: 0 + scoreIndex + dotsIndex + 1,
         };
       });
 

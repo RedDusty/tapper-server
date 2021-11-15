@@ -1,14 +1,14 @@
-const firestore = require('../fbConfig').firestore;
-const { doc, getDoc, updateDoc } = require('firebase/firestore');
+const firestore = require("../fbConfig").firestore;
+const { doc, getDoc, updateDoc } = require("firebase/firestore");
 
 async function userKeyGet(userUID) {
-  const docRef = doc(firestore, 'users', userUID);
+  const docRef = doc(firestore, "users", userUID);
 
   const userDoc = await getDoc(docRef);
 
   const userKey = await userDoc.data().key;
 
-  return userKey
+  return userKey;
 }
 
 /**
@@ -17,7 +17,7 @@ async function userKeyGet(userUID) {
  * @param {number} score
  */
 exports.userScoreAdd = async function userScoreAdd(userUID, score) {
-  const docRef = doc(firestore, 'users', userUID);
+  const docRef = doc(firestore, "users", userUID);
 
   const userDoc = await getDoc(docRef);
 
@@ -25,15 +25,12 @@ exports.userScoreAdd = async function userScoreAdd(userUID, score) {
 
   userScore += score;
 
-  const key = await userKeyGet(userUID)
+  const key = await userKeyGet(userUID);
 
-  await updateDoc(
-    docRef,
-    {
-      score: userScore,
-      key
-    },
-  );
+  await updateDoc(docRef, {
+    score: userScore,
+    key,
+  });
 };
 
 /**
@@ -42,19 +39,23 @@ exports.userScoreAdd = async function userScoreAdd(userUID, score) {
  * @param {number} score
  */
 exports.userScoreDecrease = async function userScoreDecrease(userUID, score) {
-  const docRef = doc(firestore, 'users', userUID);
+  const docRef = doc(firestore, "users", userUID);
 
   const userDoc = await getDoc(docRef);
 
   let userScore = await userDoc.data().score;
 
-  userScore -= score;
+  if (score > 0) {
+    userScore -= score;
+  } else {
+    userScore += score
+  }
 
-  const key = await userKeyGet(userUID)
+  const key = await userKeyGet(userUID);
 
   await updateDoc(docRef, {
     score: userScore,
-    key
+    key,
   });
 };
 
@@ -70,11 +71,11 @@ exports.userScoreDecrease = async function userScoreDecrease(userUID, score) {
  * @param {number} skin.borderWidth
  */
 exports.userSkinChange = async function userSkinChange(userUID, skin) {
-  const docRef = doc(firestore, 'users', userUID);
+  const docRef = doc(firestore, "users", userUID);
 
   const userDoc = await getDoc(docRef);
 
   await updateDoc(docRef, {
-    skin: skin
-  })
-}
+    skin: skin,
+  });
+};
