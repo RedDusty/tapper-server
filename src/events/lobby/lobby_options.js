@@ -67,6 +67,30 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           emitterOption(io, data.code, data.maxPlayers, "setMaxPlayers");
           break;
         }
+        case "setBot": {
+          emitterMessage(
+            io,
+            data,
+            lobby.bot.isTurned,
+            data.bot,
+            "Bot"
+          );
+          lobby.bot.isTurned = data.bot;
+          emitterOption(io, data.code, data.bot, "setBot");
+          break;
+        }
+        case "setDifficulty": {
+          emitterMessage(
+            io,
+            data,
+            lobby.bot.difficulty,
+            data.difficulty,
+            "Bot difficulty"
+          );
+          lobby.bot.difficulty = data.difficulty;
+          emitterOption(io, data.code, data.difficulty, "setDifficulty");
+          break;
+        }
         default:
           break;
       }

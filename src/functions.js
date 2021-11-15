@@ -1,4 +1,5 @@
 const { dbLobby, dbOnline, dbGames } = require("./db");
+const { userScoreDecrease, userScoreAdd } = require("./firebase");
 
 function getFreeLobbies() {
   const lobbyListPublic = new Map(
@@ -21,6 +22,7 @@ function getFreeLobbies() {
         fieldX: data.fieldX,
         fieldY: data.fieldY,
         code: data.code,
+        bot: data.bot,
       };
     }
   });
@@ -149,6 +151,13 @@ function userLeave(io, socketID) {
 
         if (isAllUsersLoaded(disLobby[0].code)) {
           io.in(`LOBBY_${disLobby[0].code}`).emit("GAME_LOADED", true);
+          if (disLobby[0].bot.isTurned) {
+            setTimeout(() => {
+              const field =
+                Number(disLobby[0].fieldX) * Number(disLobby[0].fieldY);
+              botTap(disLobby[0].code, field, disLobby[0].bot.difficulty);
+            }, 3000);
+          }
         }
       }
     }
@@ -191,6 +200,195 @@ function removeKey(obj) {
   return obj;
 }
 
+function getBotConfig() {
+  return {
+    nickname: "Bot",
+    avatar: "system",
+    score: 0,
+    firstLogin: 0,
+    uid: "system",
+    id: "system",
+    isLoaded: true,
+    key: "system",
+    skin: {
+      type: "standard",
+      withBorder: true,
+      borderColor: "gray-500",
+      borderStyle: "double",
+      borderWidth: 8,
+      color: "black",
+    },
+    banned: false,
+    isLeft: false,
+  };
+}
+
+function botTap(io, socket, code, field, difficulty) {
+  if (dbGames.has(code)) {
+    const hard = () => {
+      if (difficulty === "cheater-3") return 30;
+      if (difficulty === "cheater-2") return 27;
+      if (difficulty === "cheater-1") return 24;
+      if (difficulty === "tapper") return 21;
+      if (difficulty === "extreme") return 18;
+      if (difficulty === "hard") return 8;
+      if (difficulty === "medium") return 6;
+      if (difficulty === "easy") return 4;
+    };
+    if (dbGames.has(code)) {
+      const rand =
+        Math.random() * (6000 / hard() - 3000 / hard() + 1) +
+        3000 / hard() +
+        200 / (hard() / 10);
+      setTimeout(() => {
+        if (dbGames.has(code)) {
+          const freeIndexes = dbGames
+            .get(code)
+            .dots.filter((dot) => dot.user === undefined);
+          const dotPlace =
+            freeIndexes[
+              Math.floor(Math.random() * (freeIndexes.length - 0) + 0)
+            ];
+          botTap(io, socket, code, field, difficulty);
+
+          dotTap(io, socket, dotPlace.index, code, getBotConfig());
+        }
+      }, rand);
+    }
+  }
+}
+
+function dotTap(io, socket, dotIndex, code, user) {
+  const userData = removeKey(user);
+
+  const gTemp = dbGames.get(code);
+
+  if (!dbGames.has(code)) {
+    return 0;
+  }
+
+  if (gTemp.dots[dotIndex].user === undefined) {
+    dbGames.get(code).dots[dotIndex].user = userData;
+
+    dbGames.get(code).replay.push({
+      user: removeKey(user),
+      index: dotIndex,
+      time: Date.now(),
+    });
+
+    io.in(`LOBBY_${code}`).emit("GAME_TAP", dbGames.get(code));
+  }
+
+  if (
+    dbGames.get(code).dots.filter((dot) => dot.user === undefined).length === 0
+  ) {
+    const lobby = dbLobby.get(code);
+
+    const hasBot = lobby.users.filter((user) => user.id === "system");
+    if (lobby.users.length > 1 && hasBot.length === 0) {
+      const usersByScore = lobby.users
+        .slice(0)
+        .sort((userA, userB) => userA.score - userB.score);
+      const usersDots = [];
+      lobby.users.forEach((user) => {
+        const dots = dbGames
+          .get(code)
+          .dots.filter((dot) => dot.user.uid === user.uid).length;
+        usersDots.push({ user: user, dots: dots });
+      });
+      const usersByDots = usersDots
+        .slice(0)
+        .sort((userA, userB) => userA.dots - userB.dots);
+
+      const minusScore = usersByDots.slice(
+        0,
+        Math.ceil(usersByDots.length / 2)
+      );
+      const plusScore = usersByDots.slice(Math.ceil(usersByDots.length / 2));
+
+      minusScore.forEach((uData, index) => {
+        const scoreIndex = usersByScore.findIndex(
+          (u) => u.id === uData.user.id
+        );
+        const dotsIndex = usersByDots.findIndex(
+          (u) => u.user.id === uData.user.id
+        );
+        minusScore[index] = {
+          user: uData.user,
+          dots: uData.dots,
+          score: 0 - scoreIndex - dotsIndex,
+        };
+      });
+
+      plusScore.forEach((uData, index) => {
+        const scoreIndex = usersByScore.findIndex(
+          (u) => u.id === uData.user.id
+        );
+        const dotsIndex = usersByDots.findIndex(
+          (u) => u.user.id === uData.user.id
+        );
+        plusScore[index] = {
+          user: uData.user,
+          dots: uData.dots,
+          score: 0 + scoreIndex + dotsIndex,
+        };
+      });
+
+      console.log(plusScore, minusScore);
+
+      minusScore.forEach((dUser) => {
+        if (dUser.user.id !== "system") {
+          userScoreDecrease(dUser.user.uid, dUser.score);
+        }
+      });
+      plusScore.forEach((aUser) => {
+        if (aUser.user.id !== "system") {
+          userScoreAdd(aUser.user.uid, aUser.score);
+        }
+      });
+
+      const decreasedScores = removeKey(minusScore);
+      const addedScores = removeKey(plusScore);
+
+      const game = dbGames.get(code);
+
+      const gameData = {
+        dots: game.dots,
+        time: {
+          start: game.time.start,
+          end: Date.now(),
+        },
+        replay: game.replay,
+        addScore: addedScores,
+        decreaseScore: decreasedScores,
+      };
+
+      io.in(`LOBBY_${code}`).emit("GAME_END_SCORE", gameData);
+    } else {
+      const game = dbGames.get(code);
+
+      const gameData = {
+        dots: game.dots,
+        time: {
+          start: game.time.start,
+          end: Date.now(),
+        },
+        replay: game.replay,
+      };
+
+      io.in(`LOBBY_${code}`).emit("GAME_END", gameData);
+    }
+
+    console.log(
+      `Lobby ${lobby.code} has been destroyed. Owner: ${lobby.ownerUID} | ${lobby.nickname} | ${lobby.uid}. Reason: The game is over.`
+    );
+    destroyLobbyAndGame(lobby.code);
+  }
+}
+
+exports.dotTap = dotTap;
+exports.botTap = botTap;
+exports.getBotConfig = getBotConfig;
 exports.destroyLobbyAndGame = destroyLobbyAndGame;
 exports.userLeave = userLeave;
 exports.hostChangeOrDestroy = hostChangeOrDestroy;
