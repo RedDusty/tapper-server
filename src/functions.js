@@ -278,7 +278,7 @@ function dotTap(io, socket, dotIndex, code, user) {
       time: Date.now(),
     });
 
-    io.in(`LOBBY_${code}`).emit("GAME_TAP", dbGames.get(code));
+    io.in(`LOBBY_${code}`).emit("GAME_TAP", dbGames.get(code).dots[dotIndex]);
   }
 
   if (
