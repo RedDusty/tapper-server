@@ -1,5 +1,9 @@
 const { dbLobby, dbOnline, dbGames } = require("./db");
-const { userScoreDecrease, userScoreAdd } = require("./firebase");
+const {
+  userScoreDecrease,
+  userScoreAdd,
+  userGameAdd,
+} = require("./firebase");
 
 function getFreeLobbies() {
   const lobbyListPublic = new Map(
@@ -155,7 +159,12 @@ function userLeave(io, socketID) {
             setTimeout(() => {
               const field =
                 Number(disLobby[0].fieldX) * Number(disLobby[0].fieldY);
-              botTap(disLobby[0].code, field, disLobby[0].bot.difficulty, disLobby[0].bot.speed);
+              botTap(
+                disLobby[0].code,
+                field,
+                disLobby[0].bot.difficulty,
+                disLobby[0].bot.speed
+              );
             }, 3000);
           }
         }
@@ -226,7 +235,7 @@ function getBotConfig() {
 function botTap(io, socket, code, field, difficulty, speed) {
   if (dbGames.has(code)) {
     const hard = () => {
-      if (difficulty === "custom") return Number(speed || 6)
+      if (difficulty === "custom") return Number(speed || 6);
       if (difficulty === "cheater-3") return 30;
       if (difficulty === "cheater-2") return 27;
       if (difficulty === "cheater-1") return 24;
@@ -235,7 +244,7 @@ function botTap(io, socket, code, field, difficulty, speed) {
       if (difficulty === "hard") return 8;
       if (difficulty === "medium") return 6;
       if (difficulty === "easy") return 4;
-      return 6
+      return 6;
     };
     if (dbGames.has(code)) {
       const rand =
@@ -263,28 +272,46 @@ function botTap(io, socket, code, field, difficulty, speed) {
 function dotTap(io, socket, dotIndex, code, user) {
   const userData = removeKey(user);
 
-  const gTemp = dbGames.get(code);
+  const game = dbGames.get(code);
 
   if (!dbGames.has(code)) {
     return 0;
   }
 
-  if (gTemp.dots[dotIndex].user === undefined) {
-    dbGames.get(code).dots[dotIndex].user = userData;
+  if (game.dots[dotIndex].user === undefined) {
+    game.dots[dotIndex].user = userData;
 
-    dbGames.get(code).replay.push({
+    game["userGameDots"].push({
       user: removeKey(user),
       index: dotIndex,
       time: Date.now(),
     });
 
-    io.in(`LOBBY_${code}`).emit("GAME_TAP", dbGames.get(code).dots[dotIndex]);
+    io.in(`LOBBY_${code}`).emit("GAME_TAP", game.dots[dotIndex]);
   }
 
-  if (
-    dbGames.get(code).dots.filter((dot) => dot.user === undefined).length === 0
-  ) {
+  if (game.dots.filter((dot) => dot.user === undefined).length === 0) {
     const lobby = dbLobby.get(code);
+
+    const userGame = {
+      bot: {
+        isTurned: lobby.bot.isTurned,
+        difficulty: lobby.bot.difficulty,
+        speed: lobby.bot.speed,
+      },
+      field: {
+        fieldX: lobby.fieldX,
+        fieldY: lobby.fieldY,
+      },
+      score: {
+        addScore: [],
+        decreaseScore: [],
+      },
+      users: removeKey(lobby.users),
+      timeStart: game.time.start,
+      timeEnd: Date.now(),
+      dots: game.userGameDots,
+    };
 
     const hasBot = lobby.users.filter((user) => user.id === "system");
     if (lobby.users.length > 1 && hasBot.length === 0) {
@@ -323,9 +350,10 @@ function dotTap(io, socket, dotIndex, code, user) {
       });
 
       plusScore.forEach((uData, index) => {
-        const scoreIndex = usersByScore.slice(0).reverse().findIndex(
-          (u) => u.id === uData.user.id
-        );
+        const scoreIndex = usersByScore
+          .slice(0)
+          .reverse()
+          .findIndex((u) => u.id === uData.user.id);
         const dotsIndex = usersByDots.findIndex(
           (u) => u.user.id === uData.user.id
         );
@@ -350,7 +378,8 @@ function dotTap(io, socket, dotIndex, code, user) {
       const decreasedScores = removeKey(minusScore);
       const addedScores = removeKey(plusScore);
 
-      const game = dbGames.get(code);
+      userGame.score.decreaseScore = decreasedScores.slice(0);
+      userGame.score.addScore = addedScores.slice(0);
 
       const gameData = {
         dots: game.dots,
@@ -358,23 +387,31 @@ function dotTap(io, socket, dotIndex, code, user) {
           start: game.time.start,
           end: Date.now(),
         },
-        replay: game.replay,
         addScore: addedScores,
         decreaseScore: decreasedScores,
       };
 
       io.in(`LOBBY_${code}`).emit("GAME_END_SCORE", gameData);
-    } else {
-      const game = dbGames.get(code);
 
+      lobby.users.forEach((lUser) => {
+        if (lUser.uid !== "system") {
+          userGameAdd(lUser.uid, userGame);
+        }
+      });
+    } else {
       const gameData = {
         dots: game.dots,
         time: {
           start: game.time.start,
           end: Date.now(),
         },
-        replay: game.replay,
       };
+
+      lobby.users.forEach((user) => {
+        if (user.uid !== "system") {
+          userGameAdd(user.uid, userGame);
+        }
+      });
 
       io.in(`LOBBY_${code}`).emit("GAME_END", gameData);
     }

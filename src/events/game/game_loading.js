@@ -33,7 +33,7 @@ module.exports = function (/** @type {Socket} */ socket, io) {
           start: Date.now(),
           end: null,
         },
-        replay: [],
+        userGameDots: [],
         addScore: [],
         decreaseScore: [],
       });

@@ -71,13 +71,14 @@ const tap_dot = require("./events/game/tap_dot");
 const { getFreeLobbies } = require("./functions");
 const user_room = require("./events/user_room");
 const user_logout = require("./events/user_logout");
+const user_games_list = require("./events/user_games_list");
 const global_chat_messenger = require('./events/global/global_chat_messenger');
-
 io.on("connection", (/** @type {socketio.Socket} socket*/ socket) => {
   console.log(socket.id + " is connected");
   socket.send(socket.id);
 
   global_chat_messenger(socket, io)
+  user_games_list(socket, io)
   user_login(socket, io);
   user_logout(socket, io);
   disconnect(socket, io);
