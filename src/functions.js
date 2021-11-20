@@ -165,7 +165,7 @@ function userLeave(io, socketID) {
                 disLobby[0].bot.difficulty,
                 disLobby[0].bot.speed
               );
-            }, 3000);
+            }, 5000);
           }
         }
       }
