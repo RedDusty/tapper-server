@@ -1,6 +1,21 @@
 const express = require("express");
+const cors = require("cors")
 
 const app = express();
+
+const DEPLOY_APP = process.env.DEPLOY_APP;
+
+app.use(cors({
+  origin: [
+    "https://" + DEPLOY_APP,
+    "https://" + DEPLOY_APP + "/",
+    DEPLOY_APP,
+    DEPLOY_APP + "/",
+  ],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE']
+}))
 
 const { dbOnline, globalChat } = require("./db");
 require("dotenv").config();
@@ -14,21 +29,18 @@ const server = app.listen(PORT, (err) => {
 
 app.use((req, res, next) => {
   const allowedOrigins = [
-    process.env.DEPLOY_APP,
-    process.env.CLIENT_DOMAIN_FIRST,
-    process.env.CLIENT_DOMAIN_SECOND,
-    process.env.CLIENT_DOMAIN_THIRD,
-    process.env.DEPLOY_APP + "/",
-    process.env.CLIENT_DOMAIN_FIRST + "/",
-    process.env.CLIENT_DOMAIN_SECOND + "/",
-    process.env.CLIENT_DOMAIN_THIRD + "/",
+    "https://" + DEPLOY_APP,
+    "https://" + DEPLOY_APP + "/",
+    DEPLOY_APP,
+    DEPLOY_APP + "/",
   ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
+    console.log('a');
   }
-  res.header("Access-Control-Allow-Methods", "GET");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
   res.header("Access-Control-Allow-Credentials", true);
   return next();
 });
